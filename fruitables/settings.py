@@ -28,12 +28,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-rx!@3riu2qhoc06h!nqoka2@&$$)_ve@#2wa#tp5gs#^n(9^uz'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 # ALLOWED_HOSTS = ['.vercel.app', '*']
-# ALLOWED_HOSTS = ['.vercel.app', 'now.sh', 'http://localhost:5173', '127.0.0.1']
-ALLOWED_HOSTS = ['*']
-CORS_ALLOWED_ORIGINS = ['http://localhost:5173']
+# ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['.vercel.app', 'now.sh', 'http://localhost:5173', '127.0.0.1']
+# CORS_ORIGIN_ALLOW_ALL = True
+
+# If this is used then `CORS_ALLOWED_ORIGINS` will not have any effect
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173',
+    'hhttps://ogani-frontend.vercel.app',
+]
 
 
 # Application definition
@@ -55,6 +62,7 @@ INSTALLED_APPS = [
     'orders',
     'drf_yasg',
     'whitenoise.runserver_nostatic',
+    'corsheaders'
 ]
 
 SWAGGER_SETTINGS = {
@@ -102,7 +110,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'fruitables.wsgi.application'
+WSGI_APPLICATION = 'fruitables.wsgi.app'
 
 
 # Database
@@ -197,8 +205,8 @@ DJOSER = {
 # nên ta cần chỉ định lại User model trong trường hợp cần mở rộng User model
 AUTH_USER_MODEL = 'user.UserAccount'
 
-STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_DIRS = [os.path.join(STATIC_ROOT, "static")]
+STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / "staticfiles_build"
+STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 # STATICFILES_DIRS = os.path.join(BASE_DIR, 'static'),
 # STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles', 'static')

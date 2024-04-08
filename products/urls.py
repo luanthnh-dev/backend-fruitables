@@ -1,5 +1,6 @@
 from django.urls import path
 from products import views
+
 urlpatterns = [
     path("category/", views.CategoryAPIView.as_view()),
     path("category/<slug:id_slug>/", views.CategoryDetailAPIView.as_view()),
@@ -16,4 +17,7 @@ urlpatterns = [
 
     path("product/", views.ProductViewAPI.as_view()),
     path("product/<slug:id_slug>/", views.ProductDetailAPIView.as_view()),
+    path("latest-products/", views.LatestProductsAPIView.as_view()),
+    path("top-rated-products/", views.TopRatedProductsAPIView.as_view()),
+    path("review-products/", views.ReviewProductsAPIView.as_view()),
 ]

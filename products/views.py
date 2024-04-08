@@ -1,4 +1,4 @@
-from rest_framework import views
+from rest_framework import views, generics
 from rest_framework.response import Response
 from django.http import Http404
 # from django.contrib.auth.models import User
@@ -15,6 +15,8 @@ from json import JSONDecodeError
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 # from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
+
+
 User = get_user_model()
 
 
@@ -77,11 +79,29 @@ class CategoryDetailAPIView(views.APIView):
 class ProductViewAPI(views.APIView):
     def get(self, request):
         try:
+            name_query = request.GET.get('name', None)
+            sort_query = request.GET.get('sort', None)
+
+            # Filter products by name if 'name' query parameter is provided
             products = Product.objects.all()
+            if name_query:
+                products = products.filter(name__icontains=name_query)
+
+            # Sort products based on 'sort' query parameter
+            if sort_query:
+                if sort_query == 'a-z':
+                    products = products.order_by('name')
+                elif sort_query == 'z-a':
+                    products = products.order_by('-name')
+                elif sort_query == 'high-to-low':
+                    products = products.order_by('-price')
+                elif sort_query == 'low-to-high':
+                    products = products.order_by('price')
+
             serializers = ProductSerializer(products, many=True)
-            return custom_response('Get all products successfully!', 'Success', serializers.data, 200)
+            return custom_response('Get products successfully!', 'Success', serializers.data, 200)
         except:
-            return custom_response('Get all products failed!', 'Error', None, 400)
+            return custom_response('Failed to get products!', 'Error', None, 400)
 
     def post(self, request):
         try:
@@ -93,6 +113,12 @@ class ProductViewAPI(views.APIView):
                 price=data['price'],
                 discount=data['discount'],
                 amount=data['amount'],
+                review=data['review'],
+                description=data['description'],
+                rating=data['rating'],
+                favorite=data['favorite'],
+                mix=data['mix'],
+                weight=data['weight'],
                 thumbnail=data['thumbnail'],
                 category_id=category
             )
@@ -114,7 +140,16 @@ class ProductDetailAPIView(views.APIView):
         try:
             product = self.get_object(id_slug)
             serializer = ProductSerializer(product)
-            return custom_response('Get product successfully!', 'Success', serializer.data, 200)
+
+            category_id = product.category_id
+
+            category_serializer = CategorySerializer(
+                category_id)  # Sử dụng serializer cho Category
+
+            product_data = serializer.data
+            product_data['category'] = category_serializer.data
+
+            return custom_response('Get product successfully!', 'Success', product_data, 200)
         except:
             return custom_response('Get product failed!', 'Error', "Product not found!", 400)
 
@@ -285,3 +320,33 @@ class ProductCommentDetailAPIView(views.APIView):
             return custom_response('Delete product comment successfully!', 'Success', {"product_comment_id": id_slug}, 204)
         except:
             return custom_response('Delete product comment failed!', 'Error', "Product comment not found!", 400)
+
+
+class LatestProductsAPIView(views.APIView):
+    def get(self, request):
+        try:
+            latest_products = Product.objects.order_by('-created_at')[:3]
+            serializer = ProductSerializer(latest_products, many=True)
+            return custom_response('Get latest products successfully!', 'Success', serializer.data, 200)
+        except:
+            return custom_response('Get latest products failed!', 'Error', 'Products not found', 400)
+
+
+class TopRatedProductsAPIView(views.APIView):
+    def get(self, request):
+        try:
+            top_rated_products = Product.objects.order_by('-rating')[:3]
+            serializer = ProductSerializer(top_rated_products, many=True)
+            return custom_response('Get top rated products successfully!', 'Success', serializer.data, 200)
+        except:
+            return custom_response('Get top rated products failed!', 'Error', 'Products not found', 400)
+
+
+class ReviewProductsAPIView(views.APIView):
+    def get(self, request):
+        try:
+            reviewed_products = Product.objects.exclude(review=None)[:3]
+            serializer = ProductSerializer(reviewed_products, many=True)
+            return custom_response('Get reviewed products successfully!', 'Success', serializer.data, 200)
+        except:
+            return custom_response('Get reviewed products failed!', 'Error', 'Products not found', 400)

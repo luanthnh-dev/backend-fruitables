@@ -5,6 +5,9 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.conf import settings
+from django.utils import timezone
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 class Category(models.Model):
@@ -33,9 +36,14 @@ class Product(models.Model):
     price = models.FloatField()
     discount = models.IntegerField()
     amount = models.IntegerField()
-    # Sử dụng BooleanField để tạo trường kiểu boolean true / false
+    rating = models.FloatField(default=0)
+    favorite = models.IntegerField(default=0)
+    mix = models.CharField(max_length=128)
+    weight = models.FloatField()
     is_public = models.BooleanField(null=True, blank=True)
     thumbnail = models.CharField(max_length=128)
+    review = models.IntegerField(default=0)
+    description = models.TextField(verbose_name='Description')
     # sử dụng ForeignKey để khai báo một field là khóa ngoại từ một bảng khác
     # on_delete=models.CASCADE để mô tả khi bảng category bị xóa một record...
     # thì tất cả record product có id tương ứng sẽ bị xóa theo
@@ -46,6 +54,19 @@ class Product(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True)
+
+
+@receiver(post_save, sender=Product)
+def update_product_rating(sender, instance, **kwargs):
+    if kwargs.get('created', False):
+        return
+
+    total_favorite = Product.objects.filter(category_id=instance.category_id).aggregate(
+        total_favorite=models.Sum('favorite'))['total_favorite'] or 0
+    new_rating = total_favorite / \
+        Product.objects.filter(category_id=instance.category_id).count()
+    instance.category_id.rating = min(5, max(0, new_rating))
+    instance.category_id.save()
 
 
 class Meta:
